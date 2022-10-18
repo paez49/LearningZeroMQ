@@ -1,0 +1,8 @@
+digraph "com.grupoDistribuidos:Balanceador-Carga:jar:1.0-SNAPSHOT" { 
+	"com.grupoDistribuidos:Balanceador-Carga:jar:1.0-SNAPSHOT" -> "junit:junit:jar:4.11:test" ; 
+	"com.grupoDistribuidos:Balanceador-Carga:jar:1.0-SNAPSHOT" -> "org.zeromq:jeromq:jar:0.5.1:compile" ; 
+	"com.grupoDistribuidos:Balanceador-Carga:jar:1.0-SNAPSHOT" -> "mysql:mysql-connector-java:jar:8.0.30:compile" ; 
+	"junit:junit:jar:4.11:test" -> "org.hamcrest:hamcrest-core:jar:1.3:test" ; 
+	"org.zeromq:jeromq:jar:0.5.1:compile" -> "eu.neilalexander:jnacl:jar:1.0.0:compile" ; 
+	"mysql:mysql-connector-java:jar:8.0.30:compile" -> "com.google.protobuf:protobuf-java:jar:3.19.4:compile" ; 
+ } 
