@@ -11,7 +11,7 @@ import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ.Socket;
 
-public class ProxyBalanceador {
+public class Servidor {
 
     public static void main(String[] argv) throws Exception {
         FachadaOCR fco = new FachadaOCR();
