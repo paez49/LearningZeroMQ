@@ -1,7 +1,9 @@
 package com.grupoDistribuidos.Integration;
 
 import com.grupoDistribuidos.Model.Entidades.Producto;
+import com.grupoDistribuidos.Model.Entidades.Usuario;
 import com.mysql.cj.QueryBindings;
+import com.mysql.cj.x.protobuf.MysqlxPrepare.Prepare;
 import com.grupoDistribuidos.Controller.Constantes;
 
 import java.sql.Connection;
@@ -19,6 +21,7 @@ public class QuerysProductos {
     private PreparedStatement selectAllProductos;
     private PreparedStatement selectProductoXID;
     private PreparedStatement updateProductoXID;
+    private PreparedStatement selectUserXID;
 
     public QuerysProductos() {
         try {
@@ -37,6 +40,9 @@ public class QuerysProductos {
             updateProductoXID = connection.prepareStatement(
                     "UPDATE Producto "
                             + "Set CantiProducto = ? where IDProducto = ?");
+            selectUserXID = connection.prepareStatement(
+                    "SELECT * FROM Usuarios "
+                            + "WHERE username = ?");
         } catch (SQLException sqlException) {
             sqlException.printStackTrace();
             System.exit(1);
@@ -98,5 +104,30 @@ public class QuerysProductos {
         }
         updateProductoXID.executeUpdate();
         return true;
+    }
+
+    public Usuario obtenerUsuarioContrasena(String username) {
+        try {
+            selectUserXID.setString(1, username);
+        } catch (SQLException sqlException) {
+            sqlException.printStackTrace();
+
+            return null;
+        }
+        Usuario user = new Usuario();
+        try (ResultSet resultSet = selectUserXID.executeQuery()) {
+
+            while (resultSet.next()) {
+                user = new Usuario(
+                        resultSet.getString("username"),
+                        resultSet.getString("password"));
+
+            }
+
+            return user;
+        } catch (SQLException sqlException) {
+            sqlException.printStackTrace();
+            return null;
+        }
     }
 }
