@@ -26,20 +26,28 @@
       <scope>test</scope>
     </dependency>
     <!--Zeromq-->
-<dependency>
-<groupId>org.zeromq</groupId>
-<artifactId>jeromq</artifactId>
-<version>0.5.1</version>
-</dependency>
-<dependency>
-    <groupId>mysql</groupId>
-    <artifactId>mysql-connector-java</artifactId>
-    <version>8.0.30</version>
-</dependency>
+    <dependency>
+      <groupId>org.zeromq</groupId>
+      <artifactId>jeromq</artifactId>
+      <version>0.5.1</version>
+    </dependency>
+    <dependency>
+      <groupId>mysql</groupId>
+      <artifactId>mysql-connector-java</artifactId>
+      <version>8.0.30</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/de.slevermann/pwhash-pbkdf2 -->
+    <dependency>
+      <groupId>de.rtner</groupId>
+      <artifactId>PBKDF2</artifactId>
+      <version>1.1.4</version>
+  </dependency>
+
   </dependencies>
 
   <build>
-    <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
+    <pluginManagement>
+      <!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
       <plugins>
         <!-- clean lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#clean_Lifecycle -->
         <plugin>
