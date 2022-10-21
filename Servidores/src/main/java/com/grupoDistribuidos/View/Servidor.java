@@ -35,6 +35,8 @@ public class Servidor {
                 System.out.println("Se modificó");
                 System.out.println("PRODUCTO: " + prod.toString());
             }
+        }else{
+            System.out.println("No existe");
         }
 
         /*
@@ -52,12 +54,12 @@ public class Servidor {
          * }
          * }
          */
-        String originalPassword = "eskere";
+        String originalPassword = "guau123";
 
         String generatedSecuredPasswordHash = generateStorngPasswordHash(originalPassword);
         System.out.println(generatedSecuredPasswordHash);
         //String originalPassword = "password";
-        boolean matched = validatePassword("password", generatedSecuredPasswordHash);
+        boolean matched = validatePassword("distribuidos", generatedSecuredPasswordHash);
         System.out.println(matched);
 
         matched = validatePassword("eskere", generatedSecuredPasswordHash);
