@@ -1,6 +1,7 @@
 package com.grupoDistribuidos.View;
 
 import com.grupoDistribuidos.Model.Entidades.Producto;
+import com.grupoDistribuidos.Model.Entidades.Usuario;
 import com.grupoDistribuidos.Controller.FachadaOCR;
 
 import java.util.List;
@@ -35,6 +36,11 @@ public class Servidor {
                 System.out.println("Se modificó");
                 System.out.println("PRODUCTO: " + prod.toString());
             }
+<<<<<<< HEAD
+=======
+        } else {
+            System.out.println("No existe");
+>>>>>>> 5425f21533d3d8f0652afbefac30223071550534
         }
 
         /*
@@ -52,6 +58,7 @@ public class Servidor {
          * }
          * }
          */
+<<<<<<< HEAD
 
         String originalPassword = "eskere";
 
@@ -59,17 +66,22 @@ public class Servidor {
         System.out.println(generatedSecuredPasswordHash);
         //String originalPassword = "password";
         boolean matched = validatePassword("password", generatedSecuredPasswordHash);
+=======
+        Usuario user = fco.obtenerUsuarioContrasena("Juan");
+        boolean matched = validatePassword("distribuidos", user.getPasword());
+>>>>>>> 5425f21533d3d8f0652afbefac30223071550534
         System.out.println(matched);
-
-        matched = validatePassword("eskere", generatedSecuredPasswordHash);
+        user = fco.obtenerUsuarioContrasena("Natalia");
+        matched = validatePassword("Distribuidos", user.getPasword());
         System.out.println(matched);
-        generatedSecuredPasswordHash = generateStorngPasswordHash(originalPassword);
-        System.out.println(generatedSecuredPasswordHash);
-
-        matched = validatePassword("password", generatedSecuredPasswordHash);
+        user = fco.obtenerUsuarioContrasena("Laura");
+        matched = validatePassword("sofia456", user.getPasword());
         System.out.println(matched);
-
-        matched = validatePassword("eskere", generatedSecuredPasswordHash);
+        user = fco.obtenerUsuarioContrasena("Rafael");
+        matched = validatePassword("12345678", user.getPasword());
+        System.out.println(matched);
+        user = fco.obtenerUsuarioContrasena("Mateo");
+        matched = validatePassword("guau123", user.getPasword());
         System.out.println(matched);
     }
 

@@ -1,6 +1,7 @@
 package com.grupoDistribuidos.Controller;
 
 import com.grupoDistribuidos.Model.Entidades.Producto;
+import com.grupoDistribuidos.Model.Entidades.Usuario;
 import com.grupoDistribuidos.Integration.QuerysProductos;
 
 import java.sql.SQLException;
@@ -26,5 +27,8 @@ public class FachadaOCR {
             e.printStackTrace();
         }
         return true;
+    }
+    public Usuario obtenerUsuarioContrasena(String username){
+        return querysProducs.obtenerUsuarioContrasena(username);
     }
 }
