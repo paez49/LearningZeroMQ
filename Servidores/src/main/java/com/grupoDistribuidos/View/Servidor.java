@@ -5,17 +5,8 @@ import com.grupoDistribuidos.Model.Entidades.Usuario;
 import com.grupoDistribuidos.Controller.FachadaOCR;
 
 import java.util.List;
-import java.util.ArrayList;
-import java.util.Arrays;
-
-import org.zeromq.SocketType;
-import org.zeromq.ZContext;
-import org.zeromq.ZMQ.Socket;
-
-import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
-import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
