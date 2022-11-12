@@ -1,6 +1,7 @@
 package com.grupoDistribuidos;
 
-import javax.naming.ldap.SortKey;
+import java.util.Scanner;
+
 
 import org.zeromq.SocketType;
 import org.zeromq.ZMQ.Poller;
@@ -11,14 +12,21 @@ public class Cliente {
 
     public static void main(String[] args) throws Exception {
         try(ZContext context = new ZContext()){
-            Socket socket = context.createSocket(SocketType.REQ);
-            socket.connect("tcp://10.43.100.203:5559");
-            Poller poller = context.createPoller(1);
-            poller.register(socket, Poller.POLLIN);
-            String mensaje = String.format("%s", "hola");
-            socket.send(mensaje);
-            String hola = socket.recvStr();
-            System.out.println(hola);
+            System.out.println("Ingrese peticion");
+            String peticion = "hola";
+            Scanner entradaEscaner = new Scanner (System.in); 
+            // peticion = entradaEscaner.nextLine();
+            Socket socketCliente = context.createSocket(SocketType.REQ);
+            ZHelper.setId(socketCliente);
+
+            socketCliente.connect("tcp://25.63.93.84:5559");
+            String reply = "";
+            while(true){
+                socketCliente.send(peticion);
+                reply = socketCliente.recvStr();
+                System.out.println("Cliente: "+reply);
+            }
+            
         }
     }
 }

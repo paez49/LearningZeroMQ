@@ -3,6 +3,12 @@ package com.grupoDistribuidos.View;
 import com.grupoDistribuidos.Model.Entidades.Producto;
 import com.grupoDistribuidos.Model.Entidades.Usuario;
 import com.grupoDistribuidos.Controller.FachadaOCR;
+import com.grupoDistribuidos.Controller.ZHelper;
+
+import org.zeromq.SocketType;
+import org.zeromq.ZMQ.Socket;
+import org.zeromq.ZContext;
+import org.zeromq.ZMQException;
 
 import java.util.List;
 import javax.crypto.SecretKeyFactory;
@@ -15,63 +21,28 @@ import java.security.spec.InvalidKeySpecException;
 public class Servidor {
 
     public static void main(String[] argv) throws Exception {
-        FachadaOCR fco = new FachadaOCR();
-        List<Producto> res = fco.ConsultarProductos();
-        System.out.println(res.toString());
+        try (ZContext context = new ZContext()) {
+            Socket servidor = context.createSocket(SocketType.REQ);
+            ZHelper.setId(servidor);
 
-        Producto prod = fco.ObtenerProductoXID(49);
-        if (prod.getCantiProducto() > 1 && prod != null) {
-            prod.setCantiProducto(prod.getCantiProducto() - 1);
-            fco.actualizarProducto(prod.getIdProducto(), prod.getCantiProducto());
-            if (true) {
-                System.out.println("Se modificó");
-                System.out.println("PRODUCTO: " + prod.toString());
+            servidor.connect("tcp://25.63.93.84:5560");
+
+            servidor.send("READY");
+            while(true){
+                
+                String direccion = servidor.recvStr();
+                String vacio = servidor.recvStr();
+                assert (vacio.length() == 0);
+
+                String peticion = servidor.recvStr();
+                System.out.println("Servidor: "+peticion);
+
+                servidor.sendMore(direccion);
+                servidor.sendMore("");
+                servidor.send("Resultado");
             }
-        } else {
-            System.out.println("No existe");
-
+            
         }
-
-        /*
-         * try (ZContext context = new ZContext()) {
-         * Socket server = context.createSocket(SocketType.REP);
-         * server.bind("tcp://*:5555");
-         * System.out.println("Esperando cliente");
-         * String request = "PETICIÓN RECIBIDA";
-         * while (true) {
-         * String peticion = server.recvStr();
-         * System.out.println("PETICION: " + peticion);
-         * String[] arrOfStr = peticion.split(" ");
-         * Thread.sleep(100); // Do some heavy work
-         * server.send(request);
-         * }
-         * }
-         */
-
-
-        String originalPassword = "eskere";
-
-        String generatedSecuredPasswordHash = generateStorngPasswordHash(originalPassword);
-        System.out.println(generatedSecuredPasswordHash);
-        //String originalPassword = "password";
-        boolean matched = validatePassword("password", generatedSecuredPasswordHash);
-
-        Usuario user = fco.obtenerUsuarioContrasena("Juan");
-         matched = validatePassword("distribuidos", user.getPasword());
-
-        System.out.println(matched);
-        user = fco.obtenerUsuarioContrasena("Natalia");
-        matched = validatePassword("Distribuidos", user.getPasword());
-        System.out.println(matched);
-        user = fco.obtenerUsuarioContrasena("Laura");
-        matched = validatePassword("sofia456", user.getPasword());
-        System.out.println(matched);
-        user = fco.obtenerUsuarioContrasena("Rafael");
-        matched = validatePassword("12345678", user.getPasword());
-        System.out.println(matched);
-        user = fco.obtenerUsuarioContrasena("Mateo");
-        matched = validatePassword("guau123", user.getPasword());
-        System.out.println(matched);
     }
 
     private static String generateStorngPasswordHash(String password)
