@@ -15,11 +15,11 @@ public class Cliente {
         mensajeR = mensajeR.replace("]", "");
 
         String[] separar = mensajeR.split(",");
-        System.out.println("MENSAJE: " + mensajeR);
+        // System.out.println("MENSAJE: " + mensajeR);
 
-        String separado = separar[1];
+        String separado = separar[0];
         // Preparar respuesta
-        separado = separado.replace(" ", "");
+        // separado = separado.replace(" ", "");
         return separado;
     }
 
@@ -33,13 +33,13 @@ public class Cliente {
             ZHelper.setId(socketCliente);
             socketCliente.connect("tcp://25.63.93.84:5556");
 
-            boolean terminar = false, logueado = true;
+            boolean terminar = false, logueado = false;
             String userPass = "";
 
             System.out.println("------------------Bienvenido a la tienda online------------------");
             while (!terminar) {
 
-                System.out.println("¿Que deseas hacer?");
+                System.out.println("\n¿Que deseas hacer?\n");
                 System.out.println("L: Loguearte en la tienda");
                 System.out.println("C: Realizar consulta de los productos");
                 System.out.println("K: Realizar una compra de un producto");
@@ -50,7 +50,13 @@ public class Cliente {
                         if (logueado) {
                             socketCliente.send(peticion);
                             ZMsg reply = ZMsg.recvMsg(socketCliente);
-                            System.out.println(obtenerMensaje(reply.toString()));
+                            String consulta = obtenerMensaje(reply.toString());
+
+                            String[] consultaR = consulta.split("_");
+                            for (String consultaR2 : consultaR) {
+                                System.out.println(consultaR2);
+                            }
+
                         } else {
                             System.out.println("Debes estar logueado primero\n");
                         }
@@ -59,35 +65,41 @@ public class Cliente {
                         if (logueado) {
                             System.out.println("Ingresa ID del producto a comprar: ");
                             peticion = entradaEscaner.nextLine();
-                            peticion = "K-"+peticion;
+                            peticion = "K-" + peticion;
                             socketCliente.send(peticion);
                             ZMsg reply = ZMsg.recvMsg(socketCliente);
-                            System.out.println(obtenerMensaje(reply.toString()));
+                            System.out.println(obtenerMensaje("\n" + reply.toString()));
                         } else {
-                            System.out.println("Debes estar logueado primero\n");
+                            System.out.println("Debes estar logueado para poder usar los servicios\n");
                         }
                         break;
                     case "L":
-                        System.out.println("Ingresa usuario: ");
-                        userPass = peticion + "-" + userPass;
-                        peticion = entradaEscaner.nextLine();
-                        String nombre = peticion;
-                        userPass = userPass + peticion;
-                        System.out.println("Ingresa contrasenia: ");
-                        peticion = entradaEscaner.nextLine();
-
-                        userPass = userPass + "-" + peticion;
-                        socketCliente.send(userPass);
-                        ZMsg reply = ZMsg.recvMsg(socketCliente);
-                        // Respuesta servidor
-                        System.out.println("Cliente: " + reply.toString());
-                        String resultado = obtenerMensaje(reply.toString());
-                        if (resultado.equals("1")) {
-                            logueado = true;
-                            System.out.println("Bienvenido " + nombre + "!");
+                        if (logueado) {
+                            System.out.println("Ya estas logueado.");
                         } else {
-                            System.out.println("Usuario no existente");
+                            System.out.println("Ingresa usuario: ");
+                            userPass = peticion + "-" + userPass;
+                            peticion = entradaEscaner.nextLine();
+                            String nombre = peticion;
+                            userPass = userPass + peticion;
+                            System.out.println("Ingresa contrasenia: ");
+                            peticion = entradaEscaner.nextLine();
+
+                            userPass = userPass + "-" + peticion;
+                            socketCliente.send(userPass);
+                            ZMsg reply = ZMsg.recvMsg(socketCliente);
+                            // Respuesta servidor
+                            System.out.println("Cliente: " + reply.toString());
+                            String resultado = obtenerMensaje(reply.toString());
+                            resultado = resultado.replace(" ", "");
+                            if (resultado.equals("1")) {
+                                logueado = true;
+                                System.out.println("Bienvenid@ " + nombre + "!");
+                            } else {
+                                System.out.println("Usuario no existente");
+                            }
                         }
+
                         break;
 
                     case "S":
