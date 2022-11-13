@@ -102,8 +102,13 @@ public class QuerysProductos {
             sqlException.printStackTrace();
             return false;
         }
-        updateProductoXID.executeUpdate();
-        return true;
+        int exito = updateProductoXID.executeUpdate();
+        if(exito != 0){
+            return true;
+        }else{
+            return false;
+        }
+        
     }
 
     public Usuario obtenerUsuarioContrasena(String username) {

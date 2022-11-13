@@ -27,9 +27,9 @@ public class Producto {
     }
 
     public String toString() {
-        String str = " ID Producto: " + idProducto;
+        String str = "ID Producto: " + idProducto;
         str = str + " Nombre: " + nombreProducto;
-        str = str + " CantiProducto: "+cantiProducto+".\n";
+        str = str + " CantiProducto: "+cantiProducto+".";
 
         return str;
 
