@@ -4,6 +4,7 @@ import org.zeromq.ZMQ.Socket;
 
 import com.grupoDistribuidos.Controller.FachadaOCR;
 import com.grupoDistribuidos.Model.Entidades.Producto;
+import com.grupoDistribuidos.Model.Entidades.Usuario;
 
 import org.zeromq.*;
 
@@ -40,7 +41,7 @@ public class Servidor {
         return worker;
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws NoSuchAlgorithmException, InvalidKeySpecException {
         FachadaOCR fco = new FachadaOCR();
 
         try (ZContext ctx = new ZContext()) {
@@ -60,6 +61,7 @@ public class Servidor {
             String mensajeR = "";
             String[] separar;
             String peticion = "";
+            boolean logueado = false;
             boolean comprado = false;
             while (true) {
                 int rc = poller.poll(HEARTBEAT_INTERVAL);
@@ -103,7 +105,19 @@ public class Servidor {
                                 msg.send(worker);
                                 break;
                             case "L":
-                                
+                                Usuario user = fco.obtenerUsuarioContrasena(peticionR[1]);
+                                logueado = validatePassword(peticionR[2], user.getPasword());
+                                if (logueado) {
+                                    msg.removeLast();
+                                    resultado = "1";
+                                    msg.addLast(resultado);
+                                    msg.send(worker);
+                                }else{
+                                    msg.removeLast();
+                                    resultado = "0";
+                                    msg.addLast(resultado);
+                                    msg.send(worker);
+                                }
                                 break;
                             case "K":
                                 Producto prod = fco.ObtenerProductoXID(Integer.parseInt(peticionR[1]));
@@ -117,7 +131,7 @@ public class Servidor {
                                     msg.addLast(resultado);
                                     System.out.println(msg.toString());
                                     msg.send(worker);
-                                }else{
+                                } else {
                                     resultado = "No se pudo comprar el articulo.";
                                     msg.removeLast();
                                     msg.addLast(resultado);
@@ -126,7 +140,7 @@ public class Servidor {
                                 }
                                 break;
                         }
-                
+
                         liveness = HEARTBEAT_LIVENESS;
                     } else
                     // When we get a heartbeat message from the queue, it
@@ -211,22 +225,26 @@ public class Servidor {
 
     private static boolean validatePassword(String originalPassword, String storedPassword)
             throws NoSuchAlgorithmException, InvalidKeySpecException {
-        String[] parts = storedPassword.split(":");
-        int iterations = Integer.parseInt(parts[0]);
-
-        byte[] salt = fromHex(parts[1]);
-        byte[] hash = fromHex(parts[2]);
-
-        PBEKeySpec spec = new PBEKeySpec(originalPassword.toCharArray(),
-                salt, iterations, hash.length * 8);
-        SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-        byte[] testHash = skf.generateSecret(spec).getEncoded();
-
-        int diff = hash.length ^ testHash.length;
-        for (int i = 0; i < hash.length && i < testHash.length; i++) {
-            diff |= hash[i] ^ testHash[i];
+        if(storedPassword != null){
+            String[] parts = storedPassword.split(":");
+            int iterations = Integer.parseInt(parts[0]);
+    
+            byte[] salt = fromHex(parts[1]);
+            byte[] hash = fromHex(parts[2]);
+    
+            PBEKeySpec spec = new PBEKeySpec(originalPassword.toCharArray(),
+                    salt, iterations, hash.length * 8);
+            SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+            byte[] testHash = skf.generateSecret(spec).getEncoded();
+    
+            int diff = hash.length ^ testHash.length;
+            for (int i = 0; i < hash.length && i < testHash.length; i++) {
+                diff |= hash[i] ^ testHash[i];
+            }
+            return diff == 0;
         }
-        return diff == 0;
+        return false;
+        
     }
 
     private static byte[] fromHex(String hex) throws NoSuchAlgorithmException {
