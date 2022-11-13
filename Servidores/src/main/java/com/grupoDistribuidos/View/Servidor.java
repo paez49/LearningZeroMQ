@@ -20,8 +20,8 @@ public class Servidor {
     private final static int INTERVAL_MAX       = 32000; //  After exponential backoff
 
     //  Paranoid Pirate Protocol constants
-    private final static String PPP_READY     = "\001"; //  Signals worker is ready
-    private final static String PPP_HEARTBEAT = "\002"; //  Signals worker heartbeat
+    private final static String PPP_READY     = "\\001"; //  Signals worker is ready
+    private final static String PPP_HEARTBEAT = "\\002"; //  Signals worker heartbeat
     private static Socket worker_socket(ZContext ctx)
     {
         Socket worker = ctx.createSocket(SocketType.DEALER);
