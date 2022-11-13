@@ -1,16 +1,11 @@
 package com.grupoDistribuidos.View;
 
-import com.grupoDistribuidos.Model.Entidades.Producto;
-import com.grupoDistribuidos.Model.Entidades.Usuario;
-import com.grupoDistribuidos.Controller.FachadaOCR;
-import com.grupoDistribuidos.Controller.ZHelper;
-
-import org.zeromq.SocketType;
 import org.zeromq.ZMQ.Socket;
-import org.zeromq.ZContext;
-import org.zeromq.ZMQException;
+import org.zeromq.*;
+import java.util.Random;
+import org.zeromq.ZMQ.Poller;
 
-import java.util.List;
+
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import java.math.BigInteger;
@@ -19,31 +14,134 @@ import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 
 public class Servidor {
+    private final static int HEARTBEAT_LIVENESS = 3;     //  3-5 is reasonable
+    private final static int HEARTBEAT_INTERVAL = 1000;  //  msecs
+    private final static int INTERVAL_INIT      = 1000;  //  Initial reconnect
+    private final static int INTERVAL_MAX       = 32000; //  After exponential backoff
 
-    public static void main(String[] argv) throws Exception {
-        try (ZContext context = new ZContext()) {
-            Socket servidor = context.createSocket(SocketType.REQ);
-            ZHelper.setId(servidor);
+    //  Paranoid Pirate Protocol constants
+    private final static String PPP_READY     = "\001"; //  Signals worker is ready
+    private final static String PPP_HEARTBEAT = "\002"; //  Signals worker heartbeat
+    private static Socket worker_socket(ZContext ctx)
+    {
+        Socket worker = ctx.createSocket(SocketType.DEALER);
+        worker.connect("tcp://25.63.93.84:5556");
 
-            servidor.connect("tcp://25.63.93.84:5560");
+        //  Tell queue we're ready for work
+        System.out.println("I: worker ready\n");
+        ZFrame frame = new ZFrame(PPP_READY);
+        frame.send(worker, 0);
 
-            servidor.send("READY");
-            while(true){
-                
-                String direccion = servidor.recvStr();
-                String vacio = servidor.recvStr();
-                assert (vacio.length() == 0);
+        return worker;
+    }
+    public static void main(String[] args)
+    {
+        try (ZContext ctx = new ZContext()) {
+            Socket worker = worker_socket(ctx);
 
-                String peticion = servidor.recvStr();
-                System.out.println("Servidor: "+peticion);
+            Poller poller = ctx.createPoller(1);
+            poller.register(worker, Poller.POLLIN);
 
-                servidor.sendMore(direccion);
-                servidor.sendMore("");
-                servidor.send("Resultado");
-            }
+            //  If liveness hits zero, queue is considered disconnected
+            int liveness = HEARTBEAT_LIVENESS;
+            int interval = INTERVAL_INIT;
+
+            //  Send out heartbeats at regular intervals
+            long heartbeat_at = System.currentTimeMillis() + HEARTBEAT_INTERVAL;
+
             
+            while (true) {
+                int rc = poller.poll(HEARTBEAT_INTERVAL);
+                if (rc == -1)
+                    break; //  Interrupted
+
+                if (poller.pollin(0)) {
+                    //  Get message
+                    //  - 3-part envelope + content -> request
+                    //  - 1-part HEARTBEAT -> heartbeat
+                    ZMsg msg = ZMsg.recvMsg(worker);
+                    if (msg == null)
+                        break; 
+
+                    if (msg.size() == 3) {
+                        
+                        System.out.println("[INFO] normal reply\n");
+                        String resultado = "n";
+                        String mensaje = msg.toString();
+                        
+                        String mensajeR = mensaje.replace("[","");
+                        mensajeR = mensajeR.replace("]","");
+
+                        String[] separar = mensajeR.split(",");
+                        System.out.println("MENSAJE: "+mensajeR);
+            
+                        String peticion = separar[2];
+                        
+                        peticion = peticion.replace(" ", "");
+                        System.out.println("PETICION: "+peticion+"ola");
+                        if(peticion.equals("asd")){
+                            System.out.println("Igual");
+                        }
+                        msg.addLast(resultado);
+                        msg.send(worker);
+                        
+                        System.out.println();
+                        liveness = HEARTBEAT_LIVENESS;
+                    }
+                    else
+                        //  When we get a heartbeat message from the queue, it
+                        //  means the queue was (recently) alive, so reset our
+                        //  liveness indicator:
+                        if (msg.size() == 1) {
+                            ZFrame frame = msg.getFirst();
+                            String frameData = new String(
+                                frame.getData(), ZMQ.CHARSET
+                            );
+                            if (PPP_HEARTBEAT.equals(frameData))
+                                liveness = HEARTBEAT_LIVENESS;
+                            else {
+                                System.out.println("E: invalid message\n");
+                                msg.dump(System.out);
+                            }
+                            msg.destroy();
+                        }
+                        else {
+                            System.out.println("E: invalid message\n");
+                            msg.dump(System.out);
+                        }
+                    interval = INTERVAL_INIT;
+                }
+                else
+                    //  If the queue hasn't sent us heartbeats in a while,
+                    //  destroy the socket and reconnect. This is the simplest
+                    //  most brutal way of discarding any messages we might have
+                    //  sent in the meantime.
+                    if (--liveness == 0) {
+                        System.out.println(
+                            "W: heartbeat failure, can't reach queue\n"
+                        );
+                        System.out.printf(
+                            "W: reconnecting in %sd msec\n", interval
+                        );
+                        if (interval < INTERVAL_MAX)
+                            interval *= 2;
+                        ctx.destroySocket(worker);
+                        worker = worker_socket(ctx);
+                        liveness = HEARTBEAT_LIVENESS;
+                    }
+
+                //  Send heartbeat to queue if it's time
+                if (System.currentTimeMillis() > heartbeat_at) {
+                    long now = System.currentTimeMillis();
+                    heartbeat_at = now + HEARTBEAT_INTERVAL;
+                    System.out.println("I: worker heartbeat\n");
+                    ZFrame frame = new ZFrame(PPP_HEARTBEAT);
+                    frame.send(worker, 0);
+                }
+            }
         }
     }
+    
 
     private static String generateStorngPasswordHash(String password)
             throws NoSuchAlgorithmException, InvalidKeySpecException {
