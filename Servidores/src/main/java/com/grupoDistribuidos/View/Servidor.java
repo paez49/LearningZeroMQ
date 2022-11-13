@@ -25,7 +25,7 @@ public class Servidor {
     private static Socket worker_socket(ZContext ctx)
     {
         Socket worker = ctx.createSocket(SocketType.DEALER);
-        worker.connect("tcp://25.63.93.84:5556");
+        worker.connect("tcp://25.63.93.84:5557");
 
         //  Tell queue we're ready for work
         System.out.println("I: worker ready\n");
