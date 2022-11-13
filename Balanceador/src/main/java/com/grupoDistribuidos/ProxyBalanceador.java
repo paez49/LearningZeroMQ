@@ -14,13 +14,15 @@ import java.util.Iterator;
 import org.zeromq.*;
 import org.zeromq.ZMQ.Poller;
 import org.zeromq.ZMQ.Socket;
+//El codigo esta basado en el ejemplo planteado en la guia de ZeroMQ
+//Relacionado con el Pirata paranoico
 public class ProxyBalanceador {
     private final static int HEARTBEAT_LIVENESS = 3;    //  3-5 is reasonable
     private final static int HEARTBEAT_INTERVAL = 1000; //  msecs
 
     //  Paranoid Pirate Protocol constants
-    private final static String PPP_READY     = "\001"; //  Signals worker is ready
-    private final static String PPP_HEARTBEAT = "\002"; //  Signals worker heartbeat
+    private final static String PPP_READY     = "\\001"; //  Signals worker is ready
+    private final static String PPP_HEARTBEAT = "\\002"; //  Signals worker heartbeat
 
     //  Here we define the worker class; a structure and a set of functions that
     //  as constructor, destructor, and methods on worker objects:
@@ -82,8 +84,8 @@ public class ProxyBalanceador {
         try (ZContext ctx = new ZContext()) {
             Socket frontend = ctx.createSocket(SocketType.ROUTER);
             Socket backend = ctx.createSocket(SocketType.ROUTER);
-            frontend.bind("tcp://*:5555"); //  For clients
-            backend.bind("tcp://*:5556"); //  For workers
+            frontend.bind("tcp://*:5556"); //  For clients
+            backend.bind("tcp://*:5557"); //  For workers
 
             //  List of available workers
             ArrayList<Worker> workers = new ArrayList<Worker>();
