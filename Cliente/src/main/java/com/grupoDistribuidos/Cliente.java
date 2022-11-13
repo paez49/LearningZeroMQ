@@ -31,9 +31,9 @@ public class Cliente {
 
             Socket socketCliente = context.createSocket(SocketType.REQ);
             ZHelper.setId(socketCliente);
-            socketCliente.connect("tcp://25.63.93.84:5555");
+            socketCliente.connect("tcp://25.63.93.84:5556");
 
-            boolean terminar = false, logueado = false;
+            boolean terminar = false, logueado = true;
             String userPass = "";
 
             System.out.println("------------------Bienvenido a la tienda online------------------");
@@ -50,7 +50,7 @@ public class Cliente {
                         if (logueado) {
                             socketCliente.send(peticion);
                             ZMsg reply = ZMsg.recvMsg(socketCliente);
-                            
+                            System.out.println(obtenerMensaje(reply.toString()));
                         } else {
                             System.out.println("Debes estar logueado primero\n");
                         }
