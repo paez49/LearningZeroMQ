@@ -77,6 +77,7 @@ public class Cliente {
                         if (logueado) {
                             System.out.println("Ya estas logueado.");
                         } else {
+                            userPass ="";
                             System.out.println("Ingresa usuario: ");
                             userPass = peticion + "-" + userPass;
                             peticion = entradaEscaner.nextLine();
