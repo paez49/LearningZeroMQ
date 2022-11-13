@@ -65,7 +65,7 @@ public class Servidor {
 
                     if (msg.size() == 3) {
                         
-                        System.out.println("[INFO] normal reply\n");
+                        System.out.println("[SERVER] Enviando resultado petición\n");
                         String resultado = "n";
                         String mensaje = msg.toString();
                         
@@ -78,7 +78,19 @@ public class Servidor {
                         String peticion = separar[2];
                         
                         peticion = peticion.replace(" ", "");
-                        System.out.println("PETICION: "+peticion+"ola");
+                        System.out.println("PETICION: "+peticion);
+                        String[] peticionR = peticion.split("-");
+                        switch(peticionR[0]){
+                            case "C":
+                            System.out.println("Consulta");
+                            break;
+                            case "L":
+                            System.out.println("Login");
+                            break;
+                            case "K":
+                            System.out.println("Compra");
+                            break;
+                        }
                         if(peticion.equals("asd")){
                             System.out.println("Igual");
                         }
@@ -134,7 +146,7 @@ public class Servidor {
                 if (System.currentTimeMillis() > heartbeat_at) {
                     long now = System.currentTimeMillis();
                     heartbeat_at = now + HEARTBEAT_INTERVAL;
-                    System.out.println("I: worker heartbeat\n");
+                    System.out.println("[SERVER] HeartBeat balanceador\n");
                     ZFrame frame = new ZFrame(PPP_HEARTBEAT);
                     frame.send(worker, 0);
                 }
