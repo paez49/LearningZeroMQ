@@ -90,7 +90,7 @@ public class Cliente {
                             socketCliente.send(userPass);
                             ZMsg reply = ZMsg.recvMsg(socketCliente);
                             // Respuesta servidor
-                            System.out.println("Cliente: " + reply.toString());
+                            //System.out.println("Cliente: " + reply.toString());
                             String resultado = obtenerMensaje(reply.toString());
                             resultado = resultado.replace(" ", "");
                             if (resultado.equals("1")) {
