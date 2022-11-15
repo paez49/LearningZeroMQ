@@ -64,9 +64,7 @@ public class Servidor {
             boolean logueado = false;
             boolean comprado = false;
             while (true) {
-                int i = 0;
-                i++;
-                System.out.println("i"+i);
+              
                 int rc = poller.poll(HEARTBEAT_INTERVAL);
                 if (rc == -1)
                     break; // Interrupted
