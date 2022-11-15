@@ -1,7 +1,14 @@
 package com.grupoDistribuidos.View;
 
 import org.zeromq.ZMQ.Socket;
+
+import com.grupoDistribuidos.Controller.FachadaOCR;
+import com.grupoDistribuidos.Model.Entidades.Producto;
+import com.grupoDistribuidos.Model.Entidades.Usuario;
+
 import org.zeromq.*;
+
+import java.util.List;
 import java.util.Random;
 import org.zeromq.ZMQ.Poller;
 
@@ -27,14 +34,16 @@ public class Servidor {
         worker.connect("tcp://25.63.93.84:5557");
 
         // Tell queue we're ready for work
-        System.out.println("I: worker ready\n");
+        System.out.println("[SERVER] Listo para recibir peticiones\n");
         ZFrame frame = new ZFrame(PPP_READY);
         frame.send(worker, 0);
 
         return worker;
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        FachadaOCR fco = new FachadaOCR();
+
         try (ZContext ctx = new ZContext()) {
             Socket worker = worker_socket(ctx);
 
@@ -47,11 +56,15 @@ public class Servidor {
 
             // Send out heartbeats at regular intervals
             long heartbeat_at = System.currentTimeMillis() + HEARTBEAT_INTERVAL;
-
+            String resultado = "";
+            String mensaje = "";
+            String mensajeR = "";
+            String[] separar;
+            String peticion = "";
+            boolean logueado = false;
+            boolean comprado = false;
             while (true) {
-                int i = 0;
-                i++;
-                System.out.println("i"+i);
+              
                 int rc = poller.poll(HEARTBEAT_INTERVAL);
                 if (rc == -1)
                     break; // Interrupted
@@ -60,37 +73,74 @@ public class Servidor {
                     // Get message
                     // - 3-part envelope + content -> request
                     // - 1-part HEARTBEAT -> heartbeat
-
                     ZMsg msg = ZMsg.recvMsg(worker);
                     if (msg == null)
                         break;
 
                     if (msg.size() == 3) {
-                        System.out.println(msg.toString());
-                        System.out.println(msg.size());
-                        String mensaje = "";
-                        String mensajeR = "";
-                        String peticion = "";
 
-                        System.out.println("[INFO] normal reply\n");
-                        String resultado = "n";
+                        System.out.println("[SERVER] Enviando resultado petición\n");
+                        resultado = "";
                         mensaje = msg.toString();
 
                         mensajeR = mensaje.replace("[", "");
                         mensajeR = mensajeR.replace("]", "");
 
-                        String[] separar = mensajeR.split(",");
-                        System.out.println("MENSAJE: " + mensajeR);
+                        separar = mensajeR.split(",");
+                        System.out.println("[SERVER] MENSAJE: " + mensajeR);
 
                         peticion = separar[2];
 
                         peticion = peticion.replace(" ", "");
-                        System.out.println("PETICION: " + peticion);
-                        msg.removeLast();
-                        System.out.println(msg.toString());
-                        msg.addLast(resultado);
-
-                        msg.send(worker);
+                        System.out.println("[SERVER] PETICION: " + peticion);
+                        String[] peticionR = peticion.split("-");
+                        switch (peticionR[0]) {
+                            case "C":
+                                List<Producto> res = fco.ConsultarProductos();
+                                for (Producto res2 : res) {
+                                    resultado += res2.toString() + "_";
+                                }
+                                System.out.println(resultado);
+                                msg.removeLast();
+                                msg.addLast(resultado);
+                                msg.send(worker);
+                                break;
+                            case "L":
+                                Usuario user = fco.obtenerUsuarioContrasena(peticionR[1]);
+                                logueado = validatePassword(peticionR[2], user.getPasword());
+                                if (logueado) {
+                                    msg.removeLast();
+                                    resultado = "1";
+                                    msg.addLast(resultado);
+                                    msg.send(worker);
+                                }else{
+                                    msg.removeLast();
+                                    resultado = "0";
+                                    msg.addLast(resultado);
+                                    msg.send(worker);
+                                }
+                                break;
+                            case "K":
+                                Producto prod = fco.ObtenerProductoXID(Integer.parseInt(peticionR[1]));
+                                if (prod.getCantiProducto() > 1 && prod != null) {
+                                    prod.setCantiProducto(prod.getCantiProducto() - 1);
+                                    comprado = fco.actualizarProducto(prod.getIdProducto(), prod.getCantiProducto());
+                                }
+                                if (comprado) {
+                                    resultado = "Compra exitosa.";
+                                    msg.removeLast();
+                                    msg.addLast(resultado);
+                                    System.out.println(msg.toString());
+                                    msg.send(worker);
+                                } else {
+                                    resultado = "No se pudo comprar el articulo.";
+                                    msg.removeLast();
+                                    msg.addLast(resultado);
+                                    System.out.println(msg.toString());
+                                    msg.send(worker);
+                                }
+                                break;
+                        }
 
                         liveness = HEARTBEAT_LIVENESS;
                     } else
@@ -129,12 +179,11 @@ public class Servidor {
                     worker = worker_socket(ctx);
                     liveness = HEARTBEAT_LIVENESS;
                 }
-                
                 // Send heartbeat to queue if it's time
                 if (System.currentTimeMillis() > heartbeat_at) {
                     long now = System.currentTimeMillis();
                     heartbeat_at = now + HEARTBEAT_INTERVAL;
-                    System.out.println("I: worker heartbeat\n");
+                    System.out.println("[SERVER] HeartBeat balanceador\n");
                     ZFrame frame = new ZFrame(PPP_HEARTBEAT);
                     
                     
@@ -179,22 +228,26 @@ public class Servidor {
 
     private static boolean validatePassword(String originalPassword, String storedPassword)
             throws NoSuchAlgorithmException, InvalidKeySpecException {
-        String[] parts = storedPassword.split(":");
-        int iterations = Integer.parseInt(parts[0]);
-
-        byte[] salt = fromHex(parts[1]);
-        byte[] hash = fromHex(parts[2]);
-
-        PBEKeySpec spec = new PBEKeySpec(originalPassword.toCharArray(),
-                salt, iterations, hash.length * 8);
-        SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-        byte[] testHash = skf.generateSecret(spec).getEncoded();
-
-        int diff = hash.length ^ testHash.length;
-        for (int i = 0; i < hash.length && i < testHash.length; i++) {
-            diff |= hash[i] ^ testHash[i];
+        if(storedPassword != null){
+            String[] parts = storedPassword.split(":");
+            int iterations = Integer.parseInt(parts[0]);
+    
+            byte[] salt = fromHex(parts[1]);
+            byte[] hash = fromHex(parts[2]);
+    
+            PBEKeySpec spec = new PBEKeySpec(originalPassword.toCharArray(),
+                    salt, iterations, hash.length * 8);
+            SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+            byte[] testHash = skf.generateSecret(spec).getEncoded();
+    
+            int diff = hash.length ^ testHash.length;
+            for (int i = 0; i < hash.length && i < testHash.length; i++) {
+                diff |= hash[i] ^ testHash[i];
+            }
+            return diff == 0;
         }
-        return diff == 0;
+        return false;
+        
     }
 
     private static byte[] fromHex(String hex) throws NoSuchAlgorithmException {
