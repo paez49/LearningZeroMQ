@@ -64,6 +64,9 @@ public class Servidor {
             boolean logueado = false;
             boolean comprado = false;
             while (true) {
+                int i = 0;
+                i++;
+                System.out.println("i"+i);
                 int rc = poller.poll(HEARTBEAT_INTERVAL);
                 if (rc == -1)
                     break; // Interrupted
@@ -178,15 +181,17 @@ public class Servidor {
                     worker = worker_socket(ctx);
                     liveness = HEARTBEAT_LIVENESS;
                 }
-
                 // Send heartbeat to queue if it's time
                 if (System.currentTimeMillis() > heartbeat_at) {
                     long now = System.currentTimeMillis();
                     heartbeat_at = now + HEARTBEAT_INTERVAL;
                     System.out.println("[SERVER] HeartBeat balanceador\n");
                     ZFrame frame = new ZFrame(PPP_HEARTBEAT);
+                    
+                    
                     frame.send(worker, 0);
                 }
+                
             }
         }
     }
